@@ -12,15 +12,25 @@
 #  ssh port
 #  dns servers
 #  ntp servers
-#  free memmory
-#  free hdd
 #  print non standard accounts
-#  swap information
-#  file system healh information
 #  make sure fail2ban installed and runs on port 49100 for ssh
 #  nagios service installed and started
 # ossec installed and started
+
+function isinstalled {
+  if yum list installed "$@" >/dev/null 2>&1; then
+    true
+  else
+    false
+  fi
+}
+if isinstalled net-tools
+then
+echo -e "\e[1;32mnet-tools installed\e[0m"
+else 
 yum install net-tools -y
+fi
+
 
 #echo -e "\e[1;34mThis is a blue text.\e[0m"
 #echo -e "\e[1;32mThis is a green\e[0m"
@@ -30,6 +40,15 @@ SRV_NAME=$(hostname)
 # get IP address
 NIC_NAME=$(nmcli dev status | grep conn | sed 's/\|/ /'|awk '{print $1}')
 IP_ADDR=$(ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
+
+
+
+SE_STATUS=$(sestatus | sed 's/\|/ /'|awk '{print $3}')
+
+
+############
+# FUNCTION #
+############
 
 # Determine OS and get version 
 getOS()
@@ -43,63 +62,80 @@ else
    return 0 
 fi
 }
-# check firewalld running
-FRWL_STATE=$(firewall-cmd --state)
-FRWL_SERVICES=$(firewall-cmd --zone=public --list-services)
-FRWL_PORTS=$(firewall-cmd --zone=public --list-ports)
-# selinux status
-#sestatus
-# list cron jobs
-#crontab -l
+# Get ssh port
 
-# ssh port
-#cat /etc/ssh/sshd_config | grep Port
-#cat /etc/ssh/sshd_config | grep 22
+getSSHPORT(){
+portnum=$(cat /etc/ssh/sshd_config | grep Port | sed 's/\|/ /'|awk '{print $2}' | sed -n '1p')
+return $portnum
+}
 
-# dns servers
-#cat /etc/resolv.conf
-# ntp server
-#cat /etc/ntp.conf | grep server
-# memmory
-#free -h
+getNTP(){
+file="/etc/ntp.conf"
+if [ -f "$file" ]
+then
+	cat /etc/ntp.conf | grep -v '^#' | grep server
+else
+	echo -e "\e[1;31m NTP not installed\e[0m"
 
-# hdd
-#df -h
-# non standard accounts
-#cat /etc/passwd
+fi
 
-
-
-# software installed fail2ban , naios ...
-
-
-
-
-
-
-
+}
 
 ########################### DISPLAYA ON SCREEN #############################
 echo -e "\e[1;34mServer name: $SRV_NAME\e[0m"
 echo -e "\e[1;34mNIC: $NIC_NAME\e[0m"
 echo -e "\e[1;34mIP address: $IP_ADDR\e[0m"
-
+# centos version
+echo "                   "
 getOS
+#   firewall info
 
 if [ $? -eq 7 ]
 then
-echo "-----Firewall-----"
-echo $FRWL_STATE 
-echo $FRWL_SERVICES 
-echo $FRWL_PORTS
-elif [ $? -eq 7 ]
+echo -e "\e[1;34mCentOS 7 Firewall\e[0m"
+
+firewall-cmd --state
+firewall-cmd --zone=public --list-services
+firewall-cmd --zone=public --list-ports
+
+elif [ $? -eq 6 ]
 then
-echo "-----Firewall-----"
+echo -e "\e[1;34mCentOS6 Firewall\e[0m"
+
 service iptables status 
 iptables -L
 else
-echo #echo -e "\e[1;31m"Unknown OS and Firewall"\e[0m"
+echo echo -e "\e[1;31m"Unknown OS and Firewall"\e[0m"
 fi
+# selinux status
+echo "                          "
+echo -e "\e[1;34mSELINUX STATUS\e[0m"
+
+if [ "$SE_STATUS" == "disabled" ]
+then
+echo -e "\e[1;31mSELINUX disabled\e[0m"
+else 
+echo -e "\e[1;32mSELINUX ACTIVE\e[0m"
+fi
+#list cron jobs
+echo "                      "
+echo -e "\e[1;34mCron Jobs \e[0m"
+echo -e "\e[1;34m------------\e[0m"
+
+crontab -l
+# show port
+echo "                     "
+getSSHPORT
+echo -e "\e[1;34mSSH Port: $?\e[0m"
+# show dns servers
+echo "           "
+echo -e "\e[1;34mDNS Servers\e[0m" 
+cat /etc/resolv.conf | grep -v '^#' | grep server
+
+# ntp servers
+echo "                      "
+echo -e "\e[1;34mNTP SERVER \e[0m"
+getNTP
 
 
 
