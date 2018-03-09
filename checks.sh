@@ -105,7 +105,7 @@ echo -e "\e[1;34mCentOS6 Firewall\e[0m"
 service iptables status 
 iptables -L
 else
-echo echo -e "\e[1;31m"Unknown OS and Firewall"\e[0m"
+echo -e "\e[1;31m"Unknown OS and Firewall"\e[0m"
 fi
 # selinux status
 echo "                          "
@@ -136,8 +136,33 @@ cat /etc/resolv.conf | grep -v '^#' | grep server
 echo "                      "
 echo -e "\e[1;34mNTP SERVER \e[0m"
 getNTP
+echo "                      "
+# find non standard accounts
+u_list=$(cut -d: -f1 /etc/passwd)
+u_std_list="
+root
+bin
+daemon
+adm
+lp
+sync
+shutdown
+halt
+mail
+operator
+games
+ftp
+nobody
+systemd-network
+dbus
+polkitd
+postfix
+chrony
+sshd
+ntp
+"
+echo -e "\e[1;34mNon standard accounts\e[0m"
+echo -e "\e[1;34m-------------------\e[0m"
 
-
-
-
+diff <(echo "$u_list") <(echo "$u_std_list") | grep -E '<' | cut -c 2-
 
