@@ -105,7 +105,7 @@ echo -e "\e[1;34mCentOS6 Firewall\e[0m"
 service iptables status 
 iptables -L
 else
-echo -e "\e[1;31m"Unknown OS and Firewall"\e[0m"
+echo echo -e "\e[1;31m"Unknown OS and Firewall"\e[0m"
 fi
 # selinux status
 echo "                          "
@@ -166,3 +166,51 @@ echo -e "\e[1;34m-------------------\e[0m"
 
 diff <(echo "$u_list") <(echo "$u_std_list") | grep -E '<' | cut -c 2-
 
+# check if fail2ban is installed 
+echo -e "\e[1;34m-------------------\e[0m"
+echo -e "\e[1;34mFail2ban\e[0m"
+
+systemctl status fail2ban | grep "active (running)"  > /dev/null 
+
+if [ $? -eq 1 ]; then
+	 if [ -f /etc/fail2ban/jail.local ]; then
+         echo -e "\e[1;31mFail2ban installed but servcie not running\e[0m"
+         else 
+	 echo -e "\e[1;31mFail2ban NOT installed\e[0m"
+         fi
+else 
+    echo -e "\e[1;32mFail2ban installed\e[0m"
+    cat /etc/fail2ban/jail.local | grep port
+fi
+# check if nagios installed
+echo -e "\e[1;34m-------------------\e[0m"
+echo -e "\e[1;34mNAGIOS\e[0m"
+ 
+systemctl status nrpe | grep "active (running)"  > /dev/null 2>&1
+if [ $? -eq 1 ]; then
+         if [ -f /etc/nagios/nrpe.cfg ]; then
+         echo -e "\e[1;31mNAGIOS installed but servcie not running\e[0m"
+         else
+         echo -e "\e[1;31mNAGIOS NOT installed\e[0m"
+         fi
+else
+    echo -e "\e[1;32mNAGIOS installed\e[0m"
+   
+fi
+
+
+# check if ossec installed
+echo -e "\e[1;34m-------------------\e[0m"
+echo -e "\e[1;34mOSSEC\e[0m"
+
+systemctl status ossec | grep "active (running)"  > /dev/null 
+if [ $? -eq 1 ]; then
+         if [ -f /var/ossec/ossec.conf ]; then
+         echo -e "\e[1;31mOSSEC installed but servcie not running\e[0m"
+         else
+         echo -e "\e[1;31mOSSEC NOT installed\e[0m"
+         fi
+else
+    echo -e "\e[1;32mOSSEC installed\e[0m"
+    
+fi
